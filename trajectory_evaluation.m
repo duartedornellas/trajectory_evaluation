@@ -60,6 +60,22 @@ end
 mocap(:,3:4) = -mocap(:,3:4);
 okvis(:,3:4) = -okvis(:,3:4);
 
+%% Compute error metrics
+
+error_position = [(mocap(:,3)-okvis(:,3)).^2 + ...
+                  (mocap(:,4)-okvis(:,4)).^2 + ...
+                  (mocap(:,5)-okvis(:,5)).^2];
+
+okvis_axang = quat2axang(okvis(:,6:9));
+mocap_axang = quat2axang(mocap(:,6:9));
+
+error_quaternion  = quatmultiply(mocap(:,6:9), quatconj(okvis(:,6:9)));
+error_axisangle   = quat2axang(error_quaternion);
+error_orientation = error_axisangle(:,4) * 180/pi;
+
+TPE = rms(error_position);
+TOE = rms(error_orientation);
+
 %% Plots pt. 1
 
 figure;
@@ -77,7 +93,7 @@ rgb_dred   = colors(7,:);
 
 subplot(2,3,1)
 plot(mocap(1:end,3), mocap(1:end,4))
-hold on 
+hold on
 plot(okvis(1:end,3), okvis(1:end,4))
 xlim([-0.5,2.5])
 ylim([-0.5,2.5])
@@ -87,22 +103,16 @@ ylabel('y [m]')
 legend('Ground-truth', 'OKVIS')
 grid minor
 
-error_position = [(mocap(:,3)-okvis(:,3)).^2 + ...
-                  (mocap(:,4)-okvis(:,4)).^2 + ...
-                  (mocap(:,5)-okvis(:,5)).^2];
 subplot(2,3,2)
 plot(error_position, 'Color', rgb_dred)
 xlabel('Sample counter')
 ylabel('Position error [m]')
 grid minor
 
-error_quaternion  = quatmultiply(mocap(:,6:9), quatconj(okvis(:,6:9)));
-error_axisangle   = quat2axang(error_quaternion);
-error_orientation = error_axisangle(:,4) * 180/pi;
 subplot(2,3,3)
 plot(error_orientation, 'Color', rgb_dred)
 xlabel('Sample counter')
-ylabel('Orientation error [บ]')
+ylabel('Orientation error [ยบ]')
 grid minor
 
 subplot(2,3,4)
@@ -123,15 +133,12 @@ ylabel('Position [m]')
 legend('Ground-truth', 'OKVIS')
 grid minor
 
-okvis_axang = quat2axang(okvis(:,6:9));
-mocap_axang = quat2axang(mocap(:,6:9));
-
 subplot(2,3,6)
 plot(mocap_axang(:,4) * 180/pi)
 hold on
 plot(okvis_axang(:,4) * 180/pi)
 xlabel('Sample counter')
-ylabel('Orientation [บ]')
+ylabel('Orientation [ยบ]')
 legend('Ground-truth', 'OKVIS')
 grid minor
 
@@ -141,10 +148,6 @@ figure;
 pause(0.00001);
 frame_h = get(handle(gcf),'JavaFrame');
 set(frame_h,'Maximized',1);
-colors = get(gca,'ColorOrder');
-rgb_blue   = colors(1,:);
-rgb_red    = colors(2,:);
-rgb_green  = colors(5,:);
 
 subplot(1,3,1)
 plot(mocap(:,3));
@@ -176,12 +179,6 @@ ylabel('Position [m]')
 legend('MoCap_z', 'OKVIS_z')
 grid minor
 
-%% Compute error metrics
-
-TPE = rms(error_position);
-TOE = rms(error_orientation);
-
 %% Workspace cleanup
 
 clearvars -except mocap okvis TPE TOE
-
