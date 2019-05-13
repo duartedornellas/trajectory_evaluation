@@ -6,7 +6,7 @@ clc
 
 %% Data input
 
-dataset = 'data_000/'
+dataset = 'data_006/'
 
 load(strcat(dataset, 'okvis.csv'))
 load(strcat(dataset, 'mocap.csv'))
@@ -122,35 +122,29 @@ ylabel('y [m]')
 legend('Ground-truth', 'OKVIS')
 grid minor
 
-saveas(1, strcat(dataset, 'trajectory.epsc'));
+saveas(1, strcat(dataset, 'trajectory.eps'), 'epsc');
 
-% Position error plot
+% Error plots
 figure(2);
 pause(0.00001);
 frame_h = get(handle(2),'JavaFrame');
 set(frame_h,'Maximized',1);
 
+subplot(1,2,1)
 plot(error_position)
 xlabel('Sample counter')
 ylabel('Position error [m]')
 grid minor
 legend(sprintf('TPE = %.3f m', TPE))
 
-saveas(2, strcat(dataset, 'error_pos.epsc'));
-
-% Orientation error plot
-figure(3);
-pause(0.00001);
-frame_h = get(handle(3),'JavaFrame');
-set(frame_h,'Maximized',1);
-
+subplot(1,2,2)
 plot(error_orientation)
 xlabel('Sample counter')
 ylabel('Orientation error [º]')
 grid minor
 legend(sprintf('TOE = %.3f º', TOE))
 
-saveas(3, strcat(dataset, 'error_ang.epsc'));
+saveas(2, strcat(dataset, 'error.eps'), 'epsc');
 
 
 %% Plots (general information)
