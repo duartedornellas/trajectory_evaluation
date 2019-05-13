@@ -1,13 +1,16 @@
 %% Workspace cleanup
 
-clear all
 close all
+clear all
 clc
 
 %% Data input
 
-load('data_000/okvis.csv')
-load('data_000/mocap.csv')
+load('data_pt2/data_004/okvis.csv')
+load('data_pt2/data_004/mocap.csv')
+
+okvis(1:750, :) = [];
+mocap(1:750, :) = [];
 
 %% Dataset trimming
 
@@ -43,33 +46,55 @@ mocap = mocap_aligned;
 
 %% Dataset geometrical alignment
 
-mocap_p0 = mocap(1,3:5);
-mocap_q0 = mocap(1,6:9);
-
-R0 = quat2rotm(mocap_q0);
-
+% Mocap to local r.f. rotation matrix
 R = [ 1, 0, 0
       0, 0,-1
       0, 1, 0];
 
+% Position/orientation ground-truth data
+mocap_p0 = mocap(1,3:5);
+mocap_q0 = mocap(1,6:9);
+
+R0 = quat2rotm(mocap_q0);  
+
+% Transform ground-truth to the local r.f.
 for i=1:size(mocap,1)
     mocap(i,3:5) = (R * R0' * (mocap(i,3:5)-mocap_p0)')';
     mocap(i,6:9) = quatmultiply(mocap(i,6:9), quatconj(mocap_q0));
 end
-
 mocap(:,3:4) = -mocap(:,3:4);
 okvis(:,3:4) = -okvis(:,3:4);
 
-%% Compute error metrics
+% Get orientations as axis/angle vectors
+okvis_axang = quat2axang(okvis(:,6:9));
+mocap_axang = quat2axang(mocap(:,6:9));
+
+% Enforce positive rotation axis/angle vector
+for i=1:size(okvis_axang,1)
+    if okvis_axang(i,4) < 0
+        okvis_axang(i,:) = -okvis_axang(i,:);
+    end
+    if mocap_axang(i,4) < 0
+        mocap_axang(i,:) = -mocap_axang(i,:);
+    end
+end
+
+% Rotate axis/angle vector component to the local r.f.
+for i=1:size(mocap_axang,1)
+    mocap_axang(i,1:3) = (R*mocap_axang(i,1:3)')';
+end
+
+% Get orientations as quaternions
+okvis_quat = axang2quat(okvis_axang);
+mocap_quat = axang2quat(mocap_axang);
+
+%% Error metrics
 
 error_position = [(mocap(:,3)-okvis(:,3)).^2 + ...
                   (mocap(:,4)-okvis(:,4)).^2 + ...
                   (mocap(:,5)-okvis(:,5)).^2];
 
-okvis_axang = quat2axang(okvis(:,6:9));
-mocap_axang = quat2axang(mocap(:,6:9));
-
-error_quaternion  = quatmultiply(mocap(:,6:9), quatconj(okvis(:,6:9)));
+error_quaternion  = quatmultiply(mocap_quat, quatconj(okvis_quat));
 error_axisangle   = quat2axang(error_quaternion);
 error_orientation = error_axisangle(:,4) * 180/pi;
 
@@ -78,9 +103,9 @@ TOE = rms(error_orientation);
 
 %% Plots pt. 1
 
-figure;
+figure(1);
 pause(0.00001);
-frame_h = get(handle(gcf),'JavaFrame');
+frame_h = get(handle(1),'JavaFrame');
 set(frame_h,'Maximized',1);
 colors = get(gca,'ColorOrder');
 rgb_blue   = colors(1,:);
@@ -93,7 +118,7 @@ rgb_dred   = colors(7,:);
 
 subplot(2,3,1)
 plot(mocap(1:end,3), mocap(1:end,4))
-hold on
+hold on 
 plot(okvis(1:end,3), okvis(1:end,4))
 xlim([-0.5,2.5])
 ylim([-0.5,2.5])
@@ -112,7 +137,7 @@ grid minor
 subplot(2,3,3)
 plot(error_orientation, 'Color', rgb_dred)
 xlabel('Sample counter')
-ylabel('Orientation error [ยบ]')
+ylabel('Orientation error [บ]')
 grid minor
 
 subplot(2,3,4)
@@ -138,15 +163,15 @@ plot(mocap_axang(:,4) * 180/pi)
 hold on
 plot(okvis_axang(:,4) * 180/pi)
 xlabel('Sample counter')
-ylabel('Orientation [ยบ]')
+ylabel('Orientation [บ]')
 legend('Ground-truth', 'OKVIS')
 grid minor
 
-%% Plots pt. 2
+%% Plots (DEBUG)
 
-figure;
+figure(2);
 pause(0.00001);
-frame_h = get(handle(gcf),'JavaFrame');
+frame_h = get(handle(2),'JavaFrame');
 set(frame_h,'Maximized',1);
 
 subplot(1,3,1)
@@ -179,6 +204,84 @@ ylabel('Position [m]')
 legend('MoCap_z', 'OKVIS_z')
 grid minor
 
+
+figure(3);
+pause(0.00001);
+frame_h = get(handle(3),'JavaFrame');
+set(frame_h,'Maximized',1);
+
+subplot(1,4,1)
+plot(mocap_axang(:,1));
+hold on
+plot(okvis_axang(:,1))
+xlabel('Sample counter')
+legend('MoCap_{Wx}', 'OKVIS_{Wx}')
+grid minor
+
+subplot(1,4,2)
+plot(mocap_axang(:,2));
+hold on
+plot(okvis_axang(:,2))
+xlabel('Sample counter')
+legend('MoCap_{Wy}', 'OKVIS_{Wy}')
+grid minor
+
+subplot(1,4,3)
+plot(mocap_axang(:,3));
+hold on
+plot(okvis_axang(:,3))
+xlabel('Sample counter')
+legend('MoCap_{Wz}', 'OKVIS_{Wz}')
+grid minor
+
+subplot(1,4,4)
+plot(mocap_axang(:,4)*180/pi);
+hold on
+plot(okvis_axang(:,4)*180/pi)
+xlabel('Sample counter')
+legend('MoCap_{\theta}', 'OKVIS_{\theta}')
+grid minor
+
+
+% figure(4);
+% pause(0.00001);
+% frame_h = get(handle(4),'JavaFrame');
+% set(frame_h,'Maximized',1);
+% 
+% subplot(1,4,1)
+% plot(mocap_quat(:,1));
+% hold on
+% plot(okvis(:,6))
+% xlabel('Sample counter')
+% legend('MoCap_{qw}', 'OKVIS_{qw}')
+% grid minor
+% 
+% subplot(1,4,2)
+% plot(mocap_quat(:,2));
+% hold on
+% plot(okvis(:,7))
+% xlabel('Sample counter')
+% legend('MoCap_{qx}', 'OKVIS_{qx}')
+% grid minor
+% 
+% subplot(1,4,3)
+% plot(mocap_quat(:,3));
+% hold on
+% plot(okvis(:,8))
+% xlabel('Sample counter')
+% legend('MoCap_{qy}', 'OKVIS_{qy}')
+% grid minor
+% 
+% subplot(1,4,4)
+% plot(mocap_quat(:,4));
+% hold on
+% plot(okvis(:,9))
+% xlabel('Sample counter')
+% legend('MoCap_{qz}', 'OKVIS_{qz}')
+% grid minor
+
+
 %% Workspace cleanup
 
 clearvars -except mocap okvis TPE TOE
+
