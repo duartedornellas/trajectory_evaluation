@@ -6,8 +6,10 @@ clc
 
 %% Data input
 
-load('data_pt2/data_004/okvis.csv')
-load('data_pt2/data_004/mocap.csv')
+dataset = 'data_000/'
+
+load(strcat(dataset, 'okvis.csv'))
+load(strcat(dataset, 'mocap.csv'))
 
 okvis(1:750, :) = [];
 mocap(1:750, :) = [];
@@ -101,11 +103,61 @@ error_orientation = error_axisangle(:,4) * 180/pi;
 TPE = rms(error_position);
 TOE = rms(error_orientation);
 
-%% Plots pt. 1
+%% Plots (thesis images)
 
+% 2D Trajectory plot
 figure(1);
 pause(0.00001);
 frame_h = get(handle(1),'JavaFrame');
+set(frame_h,'Maximized',1);
+
+plot(mocap(1:end,3), mocap(1:end,4))
+hold on 
+plot(okvis(1:end,3), okvis(1:end,4))
+% xlim([-0.5,2.5])
+% ylim([-0.5,2.5])
+daspect([1,1,1]);
+xlabel('x [m]')
+ylabel('y [m]')
+legend('Ground-truth', 'OKVIS')
+grid minor
+
+saveas(1, strcat(dataset, 'trajectory.epsc'));
+
+% Position error plot
+figure(2);
+pause(0.00001);
+frame_h = get(handle(2),'JavaFrame');
+set(frame_h,'Maximized',1);
+
+plot(error_position)
+xlabel('Sample counter')
+ylabel('Position error [m]')
+grid minor
+legend(sprintf('TPE = %.3f m', TPE))
+
+saveas(2, strcat(dataset, 'error_pos.epsc'));
+
+% Orientation error plot
+figure(3);
+pause(0.00001);
+frame_h = get(handle(3),'JavaFrame');
+set(frame_h,'Maximized',1);
+
+plot(error_orientation)
+xlabel('Sample counter')
+ylabel('Orientation error [º]')
+grid minor
+legend(sprintf('TOE = %.3f º', TOE))
+
+saveas(3, strcat(dataset, 'error_ang.epsc'));
+
+
+%% Plots (general information)
+
+figure(10);
+pause(0.00001);
+frame_h = get(handle(10),'JavaFrame');
 set(frame_h,'Maximized',1);
 colors = get(gca,'ColorOrder');
 rgb_blue   = colors(1,:);
@@ -120,8 +172,8 @@ subplot(2,3,1)
 plot(mocap(1:end,3), mocap(1:end,4))
 hold on 
 plot(okvis(1:end,3), okvis(1:end,4))
-xlim([-0.5,2.5])
-ylim([-0.5,2.5])
+% xlim([-0.5,2.5])
+% ylim([-0.5,2.5])
 daspect([1,1,1]);
 xlabel('x [m]')
 ylabel('y [m]')
@@ -130,12 +182,14 @@ grid minor
 
 subplot(2,3,2)
 plot(error_position, 'Color', rgb_dred)
+legend(sprintf('TPE = %.3f m', TPE))
 xlabel('Sample counter')
 ylabel('Position error [m]')
 grid minor
 
 subplot(2,3,3)
 plot(error_orientation, 'Color', rgb_dred)
+legend(sprintf('TOE = %.3f º', TOE))
 xlabel('Sample counter')
 ylabel('Orientation error [º]')
 grid minor
@@ -167,85 +221,87 @@ ylabel('Orientation [º]')
 legend('Ground-truth', 'OKVIS')
 grid minor
 
+saveas(10, strcat(dataset, 'data.jpg'));
+
 %% Plots (DEBUG)
-
-figure(2);
-pause(0.00001);
-frame_h = get(handle(2),'JavaFrame');
-set(frame_h,'Maximized',1);
-
-subplot(1,3,1)
-plot(mocap(:,3));
-hold on
-plot(okvis(:,3))
-ylim([-0.25,2.5])
-xlabel('Sample counter')
-ylabel('Position [m]')
-legend('MoCap_x', 'OKVIS_x')
-grid minor
-
-subplot(1,3,2)
-plot(mocap(:,4));
-hold on
-plot(okvis(:,4))
-ylim([-0.25,2.5])
-xlabel('Sample counter')
-ylabel('Position [m]')
-legend('MoCap_y', 'OKVIS_y')
-grid minor
-
-subplot(1,3,3)
-plot(mocap(:,5));
-hold on
-plot(okvis(:,5))
-ylim([-0.25,2.5])
-xlabel('Sample counter')
-ylabel('Position [m]')
-legend('MoCap_z', 'OKVIS_z')
-grid minor
-
-
-figure(3);
-pause(0.00001);
-frame_h = get(handle(3),'JavaFrame');
-set(frame_h,'Maximized',1);
-
-subplot(1,4,1)
-plot(mocap_axang(:,1));
-hold on
-plot(okvis_axang(:,1))
-xlabel('Sample counter')
-legend('MoCap_{Wx}', 'OKVIS_{Wx}')
-grid minor
-
-subplot(1,4,2)
-plot(mocap_axang(:,2));
-hold on
-plot(okvis_axang(:,2))
-xlabel('Sample counter')
-legend('MoCap_{Wy}', 'OKVIS_{Wy}')
-grid minor
-
-subplot(1,4,3)
-plot(mocap_axang(:,3));
-hold on
-plot(okvis_axang(:,3))
-xlabel('Sample counter')
-legend('MoCap_{Wz}', 'OKVIS_{Wz}')
-grid minor
-
-subplot(1,4,4)
-plot(mocap_axang(:,4)*180/pi);
-hold on
-plot(okvis_axang(:,4)*180/pi)
-xlabel('Sample counter')
-legend('MoCap_{\theta}', 'OKVIS_{\theta}')
-grid minor
-
-
-% figure(4);
+% 
+% figure(11);
 % pause(0.00001);
-% frame_h = get(handle(4),'JavaFrame');
+% frame_h = get(handle(11),'JavaFrame');
+% set(frame_h,'Maximized',1);
+% 
+% subplot(1,3,1)
+% plot(mocap(:,3));
+% hold on
+% plot(okvis(:,3))
+% ylim([-0.25,2.5])
+% xlabel('Sample counter')
+% ylabel('Position [m]')
+% legend('MoCap_x', 'OKVIS_x')
+% grid minor
+% 
+% subplot(1,3,2)
+% plot(mocap(:,4));
+% hold on
+% plot(okvis(:,4))
+% ylim([-0.25,2.5])
+% xlabel('Sample counter')
+% ylabel('Position [m]')
+% legend('MoCap_y', 'OKVIS_y')
+% grid minor
+% 
+% subplot(1,3,3)
+% plot(mocap(:,5));
+% hold on
+% plot(okvis(:,5))
+% ylim([-0.25,2.5])
+% xlabel('Sample counter')
+% ylabel('Position [m]')
+% legend('MoCap_z', 'OKVIS_z')
+% grid minor
+% 
+% 
+% figure(12);
+% pause(0.00001);
+% frame_h = get(handle(12),'JavaFrame');
+% set(frame_h,'Maximized',1);
+% 
+% subplot(1,4,1)
+% plot(mocap_axang(:,1));
+% hold on
+% plot(okvis_axang(:,1))
+% xlabel('Sample counter')
+% legend('MoCap_{Wx}', 'OKVIS_{Wx}')
+% grid minor
+% 
+% subplot(1,4,2)
+% plot(mocap_axang(:,2));
+% hold on
+% plot(okvis_axang(:,2))
+% xlabel('Sample counter')
+% legend('MoCap_{Wy}', 'OKVIS_{Wy}')
+% grid minor
+% 
+% subplot(1,4,3)
+% plot(mocap_axang(:,3));
+% hold on
+% plot(okvis_axang(:,3))
+% xlabel('Sample counter')
+% legend('MoCap_{Wz}', 'OKVIS_{Wz}')
+% grid minor
+% 
+% subplot(1,4,4)
+% plot(mocap_axang(:,4)*180/pi);
+% hold on
+% plot(okvis_axang(:,4)*180/pi)
+% xlabel('Sample counter')
+% legend('MoCap_{\theta}', 'OKVIS_{\theta}')
+% grid minor
+% 
+% 
+% figure(13);
+% pause(0.00001);
+% frame_h = get(handle(13),'JavaFrame');
 % set(frame_h,'Maximized',1);
 % 
 % subplot(1,4,1)
